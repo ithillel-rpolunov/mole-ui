@@ -82,7 +82,16 @@ func collectDisks() ([]DiskStatus, error) {
 
 	annotateDiskTypes(disks)
 
+	// Sort disks: prioritize root mount ("/"), then by total size
 	sort.Slice(disks, func(i, j int) bool {
+		// Root mount always comes first
+		if disks[i].Mount == "/" {
+			return true
+		}
+		if disks[j].Mount == "/" {
+			return false
+		}
+		// Otherwise sort by size (largest first)
 		return disks[i].Total > disks[j].Total
 	})
 

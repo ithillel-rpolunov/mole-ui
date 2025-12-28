@@ -78,17 +78,17 @@ func (s *Service) StopMonitoring() {
 
 // Helper function to convert internal metrics to model
 func (s *Service) convertToModelMetrics(snapshot *MetricsSnapshot) *models.MetricsSnapshot {
-	// Calculate total disk space and usage from all disks
+	// Use the primary (first/largest) disk instead of summing all disks
+	// This prevents double-counting on macOS where APFS volumes share the same container
 	var totalDiskUsed, totalDiskTotal uint64
-	for _, disk := range snapshot.Disks {
-		totalDiskUsed += disk.Used
-		totalDiskTotal += disk.Total
-	}
-
-	// Calculate disk usage percentage
 	var diskPercent float64
-	if totalDiskTotal > 0 {
-		diskPercent = (float64(totalDiskUsed) / float64(totalDiskTotal)) * 100
+
+	if len(snapshot.Disks) > 0 {
+		// Disks are already sorted by size (largest first) in collectDisks()
+		primaryDisk := snapshot.Disks[0]
+		totalDiskUsed = primaryDisk.Used
+		totalDiskTotal = primaryDisk.Total
+		diskPercent = primaryDisk.UsedPercent
 	}
 
 	// Calculate total network traffic
