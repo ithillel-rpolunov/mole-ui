@@ -32,18 +32,13 @@ let unsubscribeProgress = null
 
 // Initialize with home directory
 onMounted(() => {
-  console.log('[AnalyzeTab] Component mounted')
-
   // Set default scan path (use a safe default instead of process.env)
   scanPath.value = '/Users'
-  console.log('[AnalyzeTab] Default scan path set to:', scanPath.value)
 
   // Listen for scan progress events
   unsubscribeProgress = EventsOn('analyze:progress', (data) => {
     scanProgress.value = data.message || 'Scanning...'
   })
-
-  console.log('[AnalyzeTab] Event listener registered successfully')
 })
 
 // Cleanup event listeners on unmount
@@ -55,29 +50,20 @@ onBeforeUnmount(() => {
 
 // Scan directory
 async function scan() {
-  console.log('[AnalyzeTab] Starting scan for path:', scanPath.value)
-
   const validation = validatePath(scanPath.value, true) // Pass true for scan mode
   if (!validation.valid) {
-    console.error('[AnalyzeTab] Path validation failed:', validation.error)
     handleError(new Error(validation.error), 'Path Validation')
     return
   }
 
-  console.log('[AnalyzeTab] Setting scanning to true...')
   scanning.value = true
   scanProgress.value = 'Starting scan...'
   scanResult.value = null
   largeFiles.value = []
 
-  console.log('[AnalyzeTab] State after reset - scanning:', scanning.value, 'scanResult:', scanResult.value)
-
   try {
-    console.log('[AnalyzeTab] Calling AnalyzeScanDirectory...')
-
     // Scan directory
     const result = await AnalyzeScanDirectory(scanPath.value)
-    console.log('[AnalyzeTab] Scan result:', result)
 
     if (!result) {
       throw new Error('Scan returned no results')
@@ -86,21 +72,15 @@ async function scan() {
     scanResult.value = result
 
     // Get large files
-    console.log('[AnalyzeTab] Fetching large files...')
     const files = await AnalyzeGetLargeFiles(scanPath.value, 20)
-    console.log('[AnalyzeTab] Large files:', files)
     largeFiles.value = files || []
 
     scanProgress.value = ''
-    console.log('[AnalyzeTab] Scan completed successfully')
   } catch (error) {
-    console.error('[AnalyzeTab] Scan failed:', error)
     handleError(error, 'Disk Analysis')
     scanResult.value = null
   } finally {
-    console.log('[AnalyzeTab] Setting scanning to false...')
     scanning.value = false
-    console.log('[AnalyzeTab] Final state - scanning:', scanning.value, 'scanResult:', scanResult.value)
   }
 }
 
@@ -151,14 +131,6 @@ async function openInFinder(path) {
   <div class="analyze-tab">
     <h1>Disk Space Analyzer</h1>
     <p class="subtitle">Visualize and analyze disk usage</p>
-
-    <!-- DEBUG INFO - Remove after testing -->
-    <div style="background: #374151; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem;">
-      <strong>DEBUG:</strong>
-      scanning={{ scanning }} |
-      scanResult={{ scanResult ? 'SET' : 'NULL' }} |
-      largeFiles.length={{ largeFiles.length }}
-    </div>
 
     <!-- Scan Input Section -->
     <div class="scan-section">

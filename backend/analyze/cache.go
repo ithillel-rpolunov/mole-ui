@@ -196,6 +196,15 @@ func loadCacheFromDisk(path string) (*cacheEntry, error) {
 		return nil, err
 	}
 
+	// Validate cache integrity - check if LargeFiles have valid sizes
+	// This catches corrupted cache files from older versions
+	for _, f := range entry.LargeFiles {
+		if f.Size == 0 && f.Path != "" {
+			// Invalid cache - file has path but no size
+			return nil, fmt.Errorf("cache corrupted: invalid file sizes")
+		}
+	}
+
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err

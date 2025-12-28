@@ -22,6 +22,7 @@ import (
 )
 
 // Type definitions for scanner results
+// NOTE: Fields must be exported (capitalized) for gob encoding/decoding in cache
 type dirEntry struct {
 	Name       string
 	Path       string
