@@ -32,12 +32,18 @@ let unsubscribeProgress = null
 
 // Initialize with home directory
 onMounted(() => {
-  scanPath.value = process.env.HOME || '/Users/' + (process.env.USER || 'user')
+  console.log('[AnalyzeTab] Component mounted')
+
+  // Set default scan path (use a safe default instead of process.env)
+  scanPath.value = '/Users'
+  console.log('[AnalyzeTab] Default scan path set to:', scanPath.value)
 
   // Listen for scan progress events
   unsubscribeProgress = EventsOn('analyze:progress', (data) => {
     scanProgress.value = data.message || 'Scanning...'
   })
+
+  console.log('[AnalyzeTab] Event listener registered successfully')
 })
 
 // Cleanup event listeners on unmount
@@ -58,10 +64,13 @@ async function scan() {
     return
   }
 
+  console.log('[AnalyzeTab] Setting scanning to true...')
   scanning.value = true
   scanProgress.value = 'Starting scan...'
   scanResult.value = null
   largeFiles.value = []
+
+  console.log('[AnalyzeTab] State after reset - scanning:', scanning.value, 'scanResult:', scanResult.value)
 
   try {
     console.log('[AnalyzeTab] Calling AnalyzeScanDirectory...')
@@ -89,7 +98,9 @@ async function scan() {
     handleError(error, 'Disk Analysis')
     scanResult.value = null
   } finally {
+    console.log('[AnalyzeTab] Setting scanning to false...')
     scanning.value = false
+    console.log('[AnalyzeTab] Final state - scanning:', scanning.value, 'scanResult:', scanResult.value)
   }
 }
 
@@ -140,6 +151,14 @@ async function openInFinder(path) {
   <div class="analyze-tab">
     <h1>Disk Space Analyzer</h1>
     <p class="subtitle">Visualize and analyze disk usage</p>
+
+    <!-- DEBUG INFO - Remove after testing -->
+    <div style="background: #374151; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem;">
+      <strong>DEBUG:</strong>
+      scanning={{ scanning }} |
+      scanResult={{ scanResult ? 'SET' : 'NULL' }} |
+      largeFiles.length={{ largeFiles.length }}
+    </div>
 
     <!-- Scan Input Section -->
     <div class="scan-section">
