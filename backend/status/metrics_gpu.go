@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	systemProfilerTimeout = 4 * time.Second
+	systemProfilerTimeout = 2 * time.Second // Reduced from 4s to prevent hanging UI
 	macGPUInfoTTL         = 10 * time.Minute
-	powermetricsTimeout   = 2 * time.Second
+	powermetricsTimeout   = 1 * time.Second // Reduced from 2s
 )
 
 // Pre-compiled regex patterns for GPU usage parsing
@@ -159,7 +159,8 @@ func getMacGPUUsage() float64 {
 	defer cancel()
 
 	// powermetrics requires root, but we try anyway - some systems may have it enabled
-	out, err := runCmd(ctx, "powermetrics", "--samplers", "gpu_power", "-i", "500", "-n", "1")
+	// Use shorter interval to prevent blocking
+	out, err := runCmd(ctx, "powermetrics", "--samplers", "gpu_power", "-i", "200", "-n", "1")
 	if err != nil {
 		return -1
 	}

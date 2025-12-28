@@ -23,18 +23,26 @@ function formatBytes(bytes) {
 }
 
 function formatPercent(value) {
-  return value.toFixed(1) + '%'
+  if (value === null || value === undefined) return '0.0%'
+  const num = Number(value)
+  if (isNaN(num)) return '0.0%'
+  return num.toFixed(1) + '%'
 }
 
 function formatRate(mbPerSec) {
   // Backend already sends MB/s
-  if (mbPerSec === 0) return '0 MB/s'
-  if (mbPerSec < 1) return (mbPerSec * 1024).toFixed(2) + ' KB/s'
-  return mbPerSec.toFixed(2) + ' MB/s'
+  if (!mbPerSec || mbPerSec === 0) return '0 MB/s'
+  const num = Number(mbPerSec)
+  if (isNaN(num)) return '0 MB/s'
+  if (num < 1) return (num * 1024).toFixed(2) + ' KB/s'
+  return num.toFixed(2) + ' MB/s'
 }
 
 function formatTemp(celsius) {
-  return celsius.toFixed(1) + '°C'
+  if (celsius === null || celsius === undefined) return '0.0°C'
+  const num = Number(celsius)
+  if (isNaN(num)) return '0.0°C'
+  return num.toFixed(1) + '°C'
 }
 
 // Get color based on percentage
@@ -111,10 +119,17 @@ async function startMonitoring() {
     await StatusStartMonitoring(2) // 2 second interval
     monitoring.value = true
 
-    // Get initial metrics
-    await fetchMetrics()
+    // Get initial metrics - try/catch to ensure loading state clears even on error
+    try {
+      await fetchMetrics()
+    } catch (fetchError) {
+      // Error already handled in fetchMetrics, continue anyway
+      // Monitoring is running, so updates will come via events
+      console.warn('Failed to fetch initial metrics, will retry via monitoring events')
+    }
   } catch (error) {
     handleError(error, 'Start Monitoring')
+    monitoring.value = false
   } finally {
     loading.value = false
   }
@@ -133,13 +148,27 @@ async function stopMonitoring() {
   }
 }
 
-// Fetch current metrics
+// Fetch current metrics with timeout
 async function fetchMetrics() {
   try {
-    const data = await StatusGetMetrics()
-    metrics.value = data
+    // Add a timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Metrics fetch timeout (10s)')), 10000)
+    })
+
+    const data = await Promise.race([StatusGetMetrics(), timeoutPromise])
+
+    // Ensure data is valid before setting
+    if (data) {
+      metrics.value = data
+    } else {
+      throw new Error('No metrics data received')
+    }
   } catch (error) {
+    console.error('Failed to fetch metrics:', error)
     handleError(error, 'Fetch Metrics')
+    // Don't leave loading state hanging - let it complete
+    throw error
   }
 }
 
@@ -200,6 +229,13 @@ onUnmounted(() => {
     <div v-if="loading && !metrics" class="loading">
       <div class="spinner"></div>
       <p>Loading metrics...</p>
+    </div>
+
+    <!-- Waiting for metrics (monitoring active but no data yet) -->
+    <div v-else-if="monitoring && !metrics" class="loading">
+      <div class="spinner"></div>
+      <p>Waiting for metrics data...</p>
+      <p class="subtitle" style="margin-top: 0.5rem;">Monitoring is active, collecting system data...</p>
     </div>
 
     <!-- Metrics Display -->
@@ -352,9 +388,9 @@ onUnmounted(() => {
               <span class="detail-label">Status:</span>
               <span class="detail-value">{{ metrics.battery.status }}</span>
             </div>
-            <div v-if="metrics.battery.health !== undefined">
+            <div v-if="metrics.battery.health !== undefined && metrics.battery.health !== ''">
               <span class="detail-label">Health:</span>
-              <span class="detail-value">{{ formatPercent(metrics.battery.health) }}</span>
+              <span class="detail-value">{{ metrics.battery.health }}</span>
             </div>
           </div>
         </div>

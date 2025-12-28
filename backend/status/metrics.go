@@ -219,7 +219,11 @@ func (c *Collector) Collect() (MetricsSnapshot, error) {
 	collect(func() (err error) { batteryStats, _ = collectBatteries(); return nil })
 	collect(func() (err error) { thermalStats = collectThermal(); return nil })
 	collect(func() (err error) { sensorStats, _ = collectSensors(); return nil })
-	collect(func() (err error) { gpuStats, err = c.collectGPU(now); return })
+	collect(func() (err error) {
+		// GPU collection can be slow, don't fail if it errors
+		gpuStats, _ = c.collectGPU(now)
+		return nil
+	})
 	collect(func() (err error) {
 		// Bluetooth is slow, cache for 30s
 		if now.Sub(c.lastBTAt) > 30*time.Second || len(c.lastBT) == 0 {
