@@ -477,11 +477,13 @@ func findLargeFilesWithSpotlight(root string, minSize int64) []fileEntry {
 
 		// Get actual disk usage for sparse files and cloud files
 		actualSize := getActualFileSize(line, info)
-		files = append(files, fileEntry{
+		entry := fileEntry{
 			Name: filepath.Base(line),
 			Path: line,
 			Size: actualSize,
-		})
+		}
+		files = append(files, entry)
+		fmt.Printf("[spotlight] Added file: Name=%s, Size=%d\n", entry.Name, entry.Size)
 	}
 
 	// Sort by size (descending)

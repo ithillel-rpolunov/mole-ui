@@ -98,14 +98,23 @@ func (s *Service) ScanDirectory(path string) (*models.ScanResult, error) {
 
 // GetLargeFiles returns the largest files in a directory
 func (s *Service) GetLargeFiles(path string, limit int) ([]models.FileEntry, error) {
+	fmt.Printf("[analyze] GetLargeFiles called: path=%s, limit=%d\n", path, limit)
+
 	result, err := s.ScanDirectory(path)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Printf("[analyze] ScanDirectory returned: LargeFiles count=%d\n", len(result.LargeFiles))
+
 	// Return top N large files
 	if limit > len(result.LargeFiles) {
 		limit = len(result.LargeFiles)
+	}
+
+	fmt.Printf("[analyze] Returning %d large files\n", limit)
+	for i := 0; i < limit && i < len(result.LargeFiles); i++ {
+		fmt.Printf("[analyze] LargeFile[%d]: Name=%s, Size=%d\n", i, result.LargeFiles[i].Name, result.LargeFiles[i].Size)
 	}
 
 	return result.LargeFiles[:limit], nil
@@ -178,6 +187,7 @@ func (s *Service) convertToModelScanResult(internal *scanResult) *models.ScanRes
 			Path: file.Path,
 			Size: file.Size,
 		}
+		fmt.Printf("[analyze] LargeFile[%d]: Name=%s, Path=%s, Size=%d\n", i, file.Name, file.Path, file.Size)
 	}
 
 	return result
