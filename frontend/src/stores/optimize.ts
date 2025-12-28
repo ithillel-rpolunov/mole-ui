@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { OptimizeGetTasks, OptimizeExecute } from '../../wailsjs/go/main/App'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
+import { handleError } from '../utils/errorHandler'
 
 export const useOptimizeStore = defineStore('optimize', () => {
   const tasks = ref([])
@@ -19,8 +20,8 @@ export const useOptimizeStore = defineStore('optimize', () => {
       const data = await OptimizeGetTasks()
       tasks.value = data || []
     } catch (err) {
-      error.value = 'Failed to get tasks: ' + err
-      console.error('Get tasks failed:', err)
+      handleError(err, 'Get optimization tasks')
+      error.value = 'Failed to get tasks'
     } finally {
       loading.value = false
     }
@@ -40,7 +41,8 @@ export const useOptimizeStore = defineStore('optimize', () => {
     try {
       await OptimizeExecute(taskIDs)
     } catch (err) {
-      error.value = 'Optimization failed: ' + err
+      handleError(err, 'Optimize execution')
+      error.value = 'Optimization failed'
       optimizing.value = false
     }
   }

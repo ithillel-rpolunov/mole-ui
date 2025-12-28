@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { TouchIDGetStatus, TouchIDEnable, TouchIDDisable } from '../../wailsjs/go/main/App'
+import { handleError } from '../utils/errorHandler'
 
 export const useTouchIDStore = defineStore('touchid', () => {
   const status = ref(null)
@@ -15,8 +16,8 @@ export const useTouchIDStore = defineStore('touchid', () => {
       status.value = data
       return data
     } catch (err) {
-      error.value = 'Failed to get TouchID status: ' + err
-      console.error('Get status failed:', err)
+      handleError(err, 'Get TouchID status')
+      error.value = 'Failed to get TouchID status'
       return null
     } finally {
       loading.value = false
@@ -30,8 +31,8 @@ export const useTouchIDStore = defineStore('touchid', () => {
       await TouchIDEnable()
       await getStatus()
     } catch (err) {
-      error.value = 'Failed to enable TouchID: ' + err
-      console.error('Enable failed:', err)
+      handleError(err, 'Enable TouchID')
+      error.value = 'Failed to enable TouchID'
     } finally {
       loading.value = false
     }
@@ -44,8 +45,8 @@ export const useTouchIDStore = defineStore('touchid', () => {
       await TouchIDDisable()
       await getStatus()
     } catch (err) {
-      error.value = 'Failed to disable TouchID: ' + err
-      console.error('Disable failed:', err)
+      handleError(err, 'Disable TouchID')
+      error.value = 'Failed to disable TouchID'
     } finally {
       loading.value = false
     }

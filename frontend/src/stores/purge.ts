@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { PurgeScanProjects, PurgeExecute } from '../../wailsjs/go/main/App'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
+import { handleError } from '../utils/errorHandler'
 
 export const usePurgeStore = defineStore('purge', () => {
   const projects = ref([])
@@ -24,8 +25,8 @@ export const usePurgeStore = defineStore('purge', () => {
       const data = await PurgeScanProjects(searchPath)
       projects.value = data || []
     } catch (err) {
-      error.value = 'Failed to scan projects: ' + err
-      console.error('Scan failed:', err)
+      handleError(err, 'Purge scan')
+      error.value = 'Failed to scan projects'
     } finally {
       loading.value = false
     }
@@ -45,7 +46,8 @@ export const usePurgeStore = defineStore('purge', () => {
     try {
       await PurgeExecute(projectPaths)
     } catch (err) {
-      error.value = 'Purge failed: ' + err
+      handleError(err, 'Purge execution')
+      error.value = 'Purge failed'
       purging.value = false
     }
   }

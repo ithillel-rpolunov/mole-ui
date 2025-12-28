@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { CleanScanTargets, CleanExecute } from '../../wailsjs/go/main/App'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
+import { handleError } from '../utils/errorHandler'
 
 export const useCleanStore = defineStore('clean', () => {
   const categories = ref([])
@@ -19,8 +20,8 @@ export const useCleanStore = defineStore('clean', () => {
       const data = await CleanScanTargets()
       categories.value = data || []
     } catch (err) {
-      error.value = 'Failed to scan: ' + err
-      console.error('Scan failed:', err)
+      handleError(err, 'Clean scan')
+      error.value = 'Failed to scan'
     } finally {
       loading.value = false
     }
@@ -40,7 +41,8 @@ export const useCleanStore = defineStore('clean', () => {
     try {
       await CleanExecute(selectedCategories, dryRun)
     } catch (err) {
-      error.value = 'Clean failed: ' + err
+      handleError(err, 'Clean execution')
+      error.value = 'Clean failed'
       cleaning.value = false
     }
   }

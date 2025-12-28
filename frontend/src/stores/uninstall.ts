@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { UninstallScanApps, UninstallApps, UninstallGetRelatedFiles } from '../../wailsjs/go/main/App'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
+import { handleError } from '../utils/errorHandler'
 
 export const useUninstallStore = defineStore('uninstall', () => {
   const apps = ref([])
@@ -20,8 +21,8 @@ export const useUninstallStore = defineStore('uninstall', () => {
       const data = await UninstallScanApps(forceRescan)
       apps.value = data || []
     } catch (err) {
-      error.value = 'Failed to scan apps: ' + err
-      console.error('Scan failed:', err)
+      handleError(err, 'Uninstall scan')
+      error.value = 'Failed to scan apps'
     } finally {
       loading.value = false
     }
@@ -41,7 +42,8 @@ export const useUninstallStore = defineStore('uninstall', () => {
     try {
       await UninstallApps(bundleIDs)
     } catch (err) {
-      error.value = 'Uninstall failed: ' + err
+      handleError(err, 'Uninstall execution')
+      error.value = 'Uninstall failed'
       uninstalling.value = false
     }
   }
@@ -53,8 +55,8 @@ export const useUninstallStore = defineStore('uninstall', () => {
       relatedFiles.value = data || []
       return data
     } catch (err) {
-      error.value = 'Failed to get related files: ' + err
-      console.error('Get related files failed:', err)
+      handleError(err, 'Get related files')
+      error.value = 'Failed to get related files'
       return []
     }
   }
