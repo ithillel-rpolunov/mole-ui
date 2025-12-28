@@ -18,7 +18,7 @@ const tabs = [
 <template>
   <aside class="sidebar">
     <div class="logo">
-      <h1>Mole</h1>
+      <h1>MoleUI</h1>
       <p class="tagline">Deep Clean & Optimize</p>
     </div>
 

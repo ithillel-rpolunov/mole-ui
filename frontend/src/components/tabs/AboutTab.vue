@@ -3,9 +3,9 @@ import { ref } from 'vue'
 
 // App information
 const appInfo = {
-  name: 'Mole - Deep Clean & Optimize',
+  name: 'MoleUI - Deep Clean & Optimize',
   version: '1.0.0',
-  description: 'Advanced macOS system maintenance and optimization tool',
+  description: 'Visual interface for the Mole CLI - Advanced macOS system maintenance and optimization tool',
 }
 
 // Features
@@ -46,16 +46,24 @@ const techStack = [
 
 // Credits
 const credits = [
-  { label: 'Developed with', value: 'Claude Code' },
+  { label: 'UI Developer', value: 'Claude Code' },
   { label: 'Framework', value: 'Wails' },
   { label: 'License', value: 'MIT' }
 ]
+
+// Core project attribution
+const coreAttribution = {
+  title: 'Based on Mole CLI',
+  description: 'This application uses the Mole project as its core engine, providing a visual interface to the powerful command-line tool.',
+  repoUrl: 'https://github.com/tw93/Mole',
+  author: 'tw93'
+}
 </script>
 
 <template>
   <div class="about-tab">
-    <h1>About Mole</h1>
-    <p class="subtitle">System maintenance and optimization for macOS</p>
+    <h1>About MoleUI</h1>
+    <p class="subtitle">Visual interface for macOS system maintenance and optimization</p>
 
     <!-- App Info Card -->
     <div class="info-card">
@@ -103,10 +111,30 @@ const credits = [
       </div>
     </div>
 
+    <!-- Core Attribution Section -->
+    <div class="section">
+      <h3 class="section-title">{{ coreAttribution.title }}</h3>
+      <div class="attribution-card">
+        <p class="attribution-description">{{ coreAttribution.description }}</p>
+        <div class="attribution-details">
+          <div class="attribution-item">
+            <span class="attribution-label">Original Project:</span>
+            <a :href="coreAttribution.repoUrl" target="_blank" rel="noopener noreferrer" class="attribution-link">
+              {{ coreAttribution.repoUrl }}
+            </a>
+          </div>
+          <div class="attribution-item">
+            <span class="attribution-label">Author:</span>
+            <span class="attribution-value">{{ coreAttribution.author }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Footer -->
     <div class="footer">
       <p>Built with care for macOS users</p>
-      <p class="copyright">&copy; 2024 Mole. All rights reserved.</p>
+      <p class="copyright">&copy; 2024 MoleUI. All rights reserved.</p>
     </div>
   </div>
 </template>
@@ -298,6 +326,66 @@ h1 {
   color: #d1d5db;
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* Attribution Card */
+.attribution-card {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border: 2px solid #374151;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.attribution-card:hover {
+  border-color: #8b5cf6;
+}
+
+.attribution-description {
+  color: #d1d5db;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.attribution-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attribution-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.attribution-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.attribution-value {
+  color: #d1d5db;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.attribution-link {
+  color: #8b5cf6;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  word-break: break-all;
+}
+
+.attribution-link:hover {
+  color: #ec4899;
+  text-decoration: underline;
 }
 
 /* Footer */
