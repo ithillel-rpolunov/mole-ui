@@ -62,9 +62,24 @@ func (s *Service) SetContext(ctx context.Context) {
 
 // ScanDirectory scans a directory and returns results
 func (s *Service) ScanDirectory(path string) (*models.ScanResult, error) {
+	// Validate path
+	if path == "" {
+		return nil, fmt.Errorf("path cannot be empty")
+	}
+
+	// Check if path exists
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("path does not exist: %s", path)
+		}
+		return nil, fmt.Errorf("cannot access path: %w", err)
+	}
+
 	// Check cache first
 	if cached, found := s.cache.get(path); found {
-		return s.convertToModelScanResult(cached), nil
+		result := s.convertToModelScanResult(cached)
+		result.Path = path
+		return result, nil
 	}
 
 	// Perform scan
@@ -76,7 +91,9 @@ func (s *Service) ScanDirectory(path string) (*models.ScanResult, error) {
 	// Cache result
 	s.cache.set(path, result)
 
-	return s.convertToModelScanResult(result), nil
+	modelResult := s.convertToModelScanResult(result)
+	modelResult.Path = path
+	return modelResult, nil
 }
 
 // GetLargeFiles returns the largest files in a directory
@@ -121,21 +138,37 @@ func (s *Service) OpenInFinder(path string) error {
 // Helper functions
 
 func (s *Service) convertToModelScanResult(internal *scanResult) *models.ScanResult {
+	if internal == nil {
+		return &models.ScanResult{
+			Entries:    []models.DirEntry{},
+			LargeFiles: []models.FileEntry{},
+			TotalSize:  0,
+			TotalItems: 0,
+			Path:       "",
+		}
+	}
+
 	result := &models.ScanResult{
 		Entries:    make([]models.DirEntry, len(internal.Entries)),
 		LargeFiles: make([]models.FileEntry, len(internal.LargeFiles)),
 		TotalSize:  internal.TotalSize,
+		TotalItems: len(internal.Entries),
 		Path:       "", // Will be set by caller
 	}
 
 	for i, entry := range internal.Entries {
+		percent := 0.0
+		if internal.TotalSize > 0 {
+			percent = float64(entry.Size) / float64(internal.TotalSize) * 100
+		}
+
 		result.Entries[i] = models.DirEntry{
 			Name:       entry.Name,
 			Path:       entry.Path,
 			Size:       entry.Size,
 			IsDir:      entry.IsDir,
 			LastAccess: entry.LastAccess,
-			Percent:    float64(entry.Size) / float64(internal.TotalSize) * 100,
+			Percent:    percent,
 		}
 	}
 
@@ -202,8 +235,11 @@ func scanDirectoryInternal(path string, ctx context.Context) (*scanResult, error
 			LargeFiles: cached.LargeFiles,
 			TotalSize:  cached.TotalSize,
 		}
+		fmt.Printf("[analyze] Using cached scan result for path: %s (TotalSize: %d)\n", path, result.TotalSize)
 		return result, nil
 	}
+
+	fmt.Printf("[analyze] Starting fresh scan for path: %s\n", path)
 
 	// Initialize progress counters
 	var filesScanned, dirsScanned, bytesScanned int64
@@ -212,11 +248,12 @@ func scanDirectoryInternal(path string, ctx context.Context) (*scanResult, error
 	// Progress callback for emitting events to frontend
 	progressCallback := func() {
 		if ctx != nil {
-			runtime.EventsEmit(ctx, "analyze:progress", models.ScanProgress{
+			progress := models.ScanProgress{
 				Path:         path,
 				ItemsScanned: int(atomic.LoadInt64(&filesScanned) + atomic.LoadInt64(&dirsScanned)),
 				TotalSize:    atomic.LoadInt64(&bytesScanned),
-			})
+			}
+			runtime.EventsEmit(ctx, "analyze:progress", progress)
 		}
 	}
 
@@ -240,8 +277,12 @@ func scanDirectoryInternal(path string, ctx context.Context) (*scanResult, error
 	// Perform the scan using the concurrent scanner
 	result, err := scanPathConcurrent(path, &filesScanned, &dirsScanned, &bytesScanned, &currentPath)
 	if err != nil {
+		fmt.Printf("[analyze] Scan failed for path %s: %v\n", path, err)
 		return nil, fmt.Errorf("scan failed: %w", err)
 	}
+
+	fmt.Printf("[analyze] Scan completed for path: %s (TotalSize: %d, Entries: %d, LargeFiles: %d)\n",
+		path, result.TotalSize, len(result.Entries), len(result.LargeFiles))
 
 	// Final progress update
 	progressCallback()

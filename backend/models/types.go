@@ -98,6 +98,7 @@ type ScanResult struct {
 	Entries    []DirEntry  `json:"entries"`
 	LargeFiles []FileEntry `json:"largeFiles"`
 	TotalSize  int64       `json:"totalSize"`
+	TotalItems int         `json:"totalItems"`
 	Path       string      `json:"path"`
 }
 

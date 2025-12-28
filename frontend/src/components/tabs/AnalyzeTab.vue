@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { EventsOn } from '../../../wailsjs/runtime/runtime'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { EventsOn, EventsOff } from '../../../wailsjs/runtime/runtime'
 import {
   AnalyzeScanDirectory,
   AnalyzeGetLargeFiles,
@@ -27,20 +27,33 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+// Event listener cleanup function
+let unsubscribeProgress = null
+
 // Initialize with home directory
 onMounted(() => {
   scanPath.value = process.env.HOME || '/Users/' + (process.env.USER || 'user')
 
   // Listen for scan progress events
-  EventsOn('analyze:progress', (data) => {
+  unsubscribeProgress = EventsOn('analyze:progress', (data) => {
     scanProgress.value = data.message || 'Scanning...'
   })
 })
 
+// Cleanup event listeners on unmount
+onBeforeUnmount(() => {
+  if (unsubscribeProgress) {
+    EventsOff('analyze:progress')
+  }
+})
+
 // Scan directory
 async function scan() {
-  const validation = validatePath(scanPath.value)
+  console.log('[AnalyzeTab] Starting scan for path:', scanPath.value)
+
+  const validation = validatePath(scanPath.value, true) // Pass true for scan mode
   if (!validation.valid) {
+    console.error('[AnalyzeTab] Path validation failed:', validation.error)
     handleError(new Error(validation.error), 'Path Validation')
     return
   }
@@ -51,16 +64,28 @@ async function scan() {
   largeFiles.value = []
 
   try {
+    console.log('[AnalyzeTab] Calling AnalyzeScanDirectory...')
+
     // Scan directory
     const result = await AnalyzeScanDirectory(scanPath.value)
+    console.log('[AnalyzeTab] Scan result:', result)
+
+    if (!result) {
+      throw new Error('Scan returned no results')
+    }
+
     scanResult.value = result
 
     // Get large files
+    console.log('[AnalyzeTab] Fetching large files...')
     const files = await AnalyzeGetLargeFiles(scanPath.value, 20)
+    console.log('[AnalyzeTab] Large files:', files)
     largeFiles.value = files || []
 
     scanProgress.value = ''
+    console.log('[AnalyzeTab] Scan completed successfully')
   } catch (error) {
+    console.error('[AnalyzeTab] Scan failed:', error)
     handleError(error, 'Disk Analysis')
     scanResult.value = null
   } finally {

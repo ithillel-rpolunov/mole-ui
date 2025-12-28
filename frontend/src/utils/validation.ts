@@ -1,4 +1,4 @@
-export function validatePath(path: string): { valid: boolean; error?: string } {
+export function validatePath(path: string, isScanMode = false): { valid: boolean; error?: string } {
   if (!path) {
     return { valid: false, error: 'Path cannot be empty' }
   }
@@ -7,9 +7,12 @@ export function validatePath(path: string): { valid: boolean; error?: string } {
     return { valid: false, error: 'Path must be absolute' }
   }
 
-  const protectedPaths = ['/', '/System', '/bin', '/sbin', '/usr', '/etc', '/var']
-  if (protectedPaths.includes(path)) {
-    return { valid: false, error: 'Cannot delete protected system path' }
+  // Only check protected paths for deletion, not for scanning
+  if (!isScanMode) {
+    const protectedPaths = ['/', '/System', '/bin', '/sbin', '/usr', '/etc', '/var']
+    if (protectedPaths.includes(path)) {
+      return { valid: false, error: 'Cannot delete protected system path' }
+    }
   }
 
   return { valid: true }
