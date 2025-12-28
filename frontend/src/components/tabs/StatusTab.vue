@@ -26,8 +26,11 @@ function formatPercent(value) {
   return value.toFixed(1) + '%'
 }
 
-function formatRate(bytesPerSec) {
-  return formatBytes(bytesPerSec) + '/s'
+function formatRate(mbPerSec) {
+  // Backend already sends MB/s
+  if (mbPerSec === 0) return '0 MB/s'
+  if (mbPerSec < 1) return (mbPerSec * 1024).toFixed(2) + ' KB/s'
+  return mbPerSec.toFixed(2) + ' MB/s'
 }
 
 function formatTemp(celsius) {
@@ -57,24 +60,24 @@ function calculateHealthScore() {
   const m = metrics.value
 
   // CPU usage (max -30 points)
-  if (m.cpu && m.cpu.usagePercent) {
-    if (m.cpu.usagePercent > 90) score -= 30
-    else if (m.cpu.usagePercent > 70) score -= 20
-    else if (m.cpu.usagePercent > 50) score -= 10
+  if (m.cpu && m.cpu.totalPercent) {
+    if (m.cpu.totalPercent > 90) score -= 30
+    else if (m.cpu.totalPercent > 70) score -= 20
+    else if (m.cpu.totalPercent > 50) score -= 10
   }
 
   // Memory usage (max -25 points)
-  if (m.memory && m.memory.usedPercent) {
-    if (m.memory.usedPercent > 90) score -= 25
-    else if (m.memory.usedPercent > 75) score -= 15
-    else if (m.memory.usedPercent > 60) score -= 5
+  if (m.memory && m.memory.percent) {
+    if (m.memory.percent > 90) score -= 25
+    else if (m.memory.percent > 75) score -= 15
+    else if (m.memory.percent > 60) score -= 5
   }
 
   // Disk usage (max -20 points)
-  if (m.disk && m.disk.usedPercent) {
-    if (m.disk.usedPercent > 95) score -= 20
-    else if (m.disk.usedPercent > 85) score -= 10
-    else if (m.disk.usedPercent > 75) score -= 5
+  if (m.disk && m.disk.percent) {
+    if (m.disk.percent > 95) score -= 20
+    else if (m.disk.percent > 85) score -= 10
+    else if (m.disk.percent > 75) score -= 5
   }
 
   // CPU temperature (max -15 points)
@@ -85,9 +88,9 @@ function calculateHealthScore() {
   }
 
   // Battery (max -10 points, only if present)
-  if (m.battery && m.battery.percent !== undefined) {
-    if (m.battery.percent < 20) score -= 10
-    else if (m.battery.percent < 40) score -= 5
+  if (m.battery && m.battery.level !== undefined) {
+    if (m.battery.level < 20) score -= 10
+    else if (m.battery.level < 40) score -= 5
   }
 
   return Math.max(0, Math.min(100, score))
@@ -219,14 +222,14 @@ onUnmounted(() => {
             <h3>CPU</h3>
           </div>
           <div class="metric-value">
-            {{ formatPercent(metrics.cpu.usagePercent || 0) }}
+            {{ formatPercent(metrics.cpu.totalPercent || 0) }}
           </div>
           <div class="progress-bar">
             <div
               class="progress-fill"
               :style="{
-                width: (metrics.cpu.usagePercent || 0) + '%',
-                backgroundColor: getHealthColor(metrics.cpu.usagePercent || 0, true)
+                width: (metrics.cpu.totalPercent || 0) + '%',
+                backgroundColor: getHealthColor(metrics.cpu.totalPercent || 0, true)
               }"
             ></div>
           </div>
@@ -249,14 +252,14 @@ onUnmounted(() => {
             <h3>Memory</h3>
           </div>
           <div class="metric-value">
-            {{ formatPercent(metrics.memory.usedPercent || 0) }}
+            {{ formatPercent(metrics.memory.percent || 0) }}
           </div>
           <div class="progress-bar">
             <div
               class="progress-fill"
               :style="{
-                width: (metrics.memory.usedPercent || 0) + '%',
-                backgroundColor: getHealthColor(metrics.memory.usedPercent || 0, true)
+                width: (metrics.memory.percent || 0) + '%',
+                backgroundColor: getHealthColor(metrics.memory.percent || 0, true)
               }"
             ></div>
           </div>
@@ -279,14 +282,14 @@ onUnmounted(() => {
             <h3>Disk</h3>
           </div>
           <div class="metric-value">
-            {{ formatPercent(metrics.disk.usedPercent || 0) }}
+            {{ formatPercent(metrics.disk.percent || 0) }}
           </div>
           <div class="progress-bar">
             <div
               class="progress-fill"
               :style="{
-                width: (metrics.disk.usedPercent || 0) + '%',
-                backgroundColor: getHealthColor(metrics.disk.usedPercent || 0, true)
+                width: (metrics.disk.percent || 0) + '%',
+                backgroundColor: getHealthColor(metrics.disk.percent || 0, true)
               }"
             ></div>
           </div>
@@ -313,34 +316,34 @@ onUnmounted(() => {
               <span class="stat-icon">⬇️</span>
               <div class="stat-info">
                 <div class="stat-label">Download</div>
-                <div class="stat-value">{{ formatRate(metrics.network.downloadRate || 0) }}</div>
+                <div class="stat-value">{{ formatRate(metrics.network.download || 0) }}</div>
               </div>
             </div>
             <div class="stat-item">
               <span class="stat-icon">⬆️</span>
               <div class="stat-info">
                 <div class="stat-label">Upload</div>
-                <div class="stat-value">{{ formatRate(metrics.network.uploadRate || 0) }}</div>
+                <div class="stat-value">{{ formatRate(metrics.network.upload || 0) }}</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Battery Card -->
-        <div class="metric-card" v-if="metrics.battery && metrics.battery.percent !== undefined">
+        <div class="metric-card" v-if="metrics.battery && metrics.battery.level !== undefined">
           <div class="card-header">
             <span class="card-icon">🔋</span>
             <h3>Battery</h3>
           </div>
           <div class="metric-value">
-            {{ formatPercent(metrics.battery.percent || 0) }}
+            {{ formatPercent(metrics.battery.level || 0) }}
           </div>
           <div class="progress-bar">
             <div
               class="progress-fill"
               :style="{
-                width: (metrics.battery.percent || 0) + '%',
-                backgroundColor: getHealthColor(metrics.battery.percent || 0, false)
+                width: (metrics.battery.level || 0) + '%',
+                backgroundColor: getHealthColor(metrics.battery.level || 0, false)
               }"
             ></div>
           </div>
@@ -357,20 +360,20 @@ onUnmounted(() => {
         </div>
 
         <!-- GPU Card -->
-        <div class="metric-card" v-if="metrics.gpu && metrics.gpu.usagePercent !== undefined">
+        <div class="metric-card" v-if="metrics.gpu && metrics.gpu.usage !== undefined">
           <div class="card-header">
             <span class="card-icon">🎮</span>
             <h3>GPU</h3>
           </div>
           <div class="metric-value">
-            {{ formatPercent(metrics.gpu.usagePercent || 0) }}
+            {{ formatPercent(metrics.gpu.usage || 0) }}
           </div>
           <div class="progress-bar">
             <div
               class="progress-fill"
               :style="{
-                width: (metrics.gpu.usagePercent || 0) + '%',
-                backgroundColor: getHealthColor(metrics.gpu.usagePercent || 0, true)
+                width: (metrics.gpu.usage || 0) + '%',
+                backgroundColor: getHealthColor(metrics.gpu.usage || 0, true)
               }"
             ></div>
           </div>
