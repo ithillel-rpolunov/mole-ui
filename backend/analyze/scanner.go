@@ -746,9 +746,15 @@ func getActualFileSize(_ string, info fs.FileInfo) int64 {
 	}
 
 	actualSize := stat.Blocks * 512
+	// If actualSize is 0 (cloud file, iCloud, etc.), return logical size
+	if actualSize == 0 {
+		return info.Size()
+	}
+	// If actualSize is less than logical size (sparse file), use actual disk usage
 	if actualSize < info.Size() {
 		return actualSize
 	}
+	// Otherwise, use logical size
 	return info.Size()
 }
 
