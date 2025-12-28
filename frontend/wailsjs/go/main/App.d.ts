@@ -26,10 +26,6 @@ export function OptimizeGetWhitelist():Promise<Array<string>>;
 
 export function OptimizeUpdateWhitelist(arg1:Array<string>):Promise<void>;
 
-export function PurgeExecute(arg1:Array<string>):Promise<void>;
-
-export function PurgeScanProjects(arg1:string):Promise<Array<models.Project>>;
-
 export function StatusGetMetrics():Promise<models.MetricsSnapshot>;
 
 export function StatusStartMonitoring(arg1:number):Promise<void>;

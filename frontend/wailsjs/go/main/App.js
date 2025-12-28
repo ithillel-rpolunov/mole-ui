@@ -50,14 +50,6 @@ export function OptimizeUpdateWhitelist(arg1) {
   return window['go']['main']['App']['OptimizeUpdateWhitelist'](arg1);
 }
 
-export function PurgeExecute(arg1) {
-  return window['go']['main']['App']['PurgeExecute'](arg1);
-}
-
-export function PurgeScanProjects(arg1) {
-  return window['go']['main']['App']['PurgeScanProjects'](arg1);
-}
-
 export function StatusGetMetrics() {
   return window['go']['main']['App']['StatusGetMetrics']();
 }

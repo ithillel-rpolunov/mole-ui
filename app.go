@@ -21,7 +21,6 @@ type App struct {
 	Optimize  *services.OptimizeService
 	Analyze   *analyze.Service
 	Status    *status.Service
-	Purge     *services.PurgeService
 	TouchID   *services.TouchIDService
 }
 
@@ -36,7 +35,6 @@ func NewApp() *App {
 		Optimize:  services.NewOptimizeService(scriptsPath),
 		Analyze:   analyze.NewService(),
 		Status:    status.NewService(),
-		Purge:     services.NewPurgeService(scriptsPath),
 		TouchID:   services.NewTouchIDService(scriptsPath),
 	}
 }
@@ -51,7 +49,6 @@ func (a *App) startup(ctx context.Context) {
 	a.Optimize.SetContext(ctx)
 	a.Analyze.SetContext(ctx)
 	a.Status.SetContext(ctx)
-	a.Purge.SetContext(ctx)
 	a.TouchID.SetContext(ctx)
 }
 
@@ -163,18 +160,6 @@ func (a *App) StatusStartMonitoring(interval int) error {
 
 func (a *App) StatusStopMonitoring() {
 	a.Status.StopMonitoring()
-}
-
-// ===========================
-// Purge Service Methods
-// ===========================
-
-func (a *App) PurgeScanProjects(searchPath string) ([]models.Project, error) {
-	return a.Purge.ScanProjects(searchPath)
-}
-
-func (a *App) PurgeExecute(projectPaths []string) error {
-	return a.Purge.PurgeProjects(projectPaths)
 }
 
 // ===========================

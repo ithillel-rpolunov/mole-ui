@@ -209,31 +209,6 @@ type ProcessInfo struct {
 	MemoryMB   int64   `json:"memoryMB"`
 }
 
-// Purge service types
-
-type Project struct {
-	Name         string    `json:"name"`
-	Path         string    `json:"path"`
-	Type         string    `json:"type"` // node_modules, target, venv, etc.
-	Size         int64     `json:"size"`
-	LastModified time.Time `json:"lastModified"`
-	IsRecent     bool      `json:"isRecent"` // < 7 days
-	Selected     bool      `json:"selected"`
-}
-
-type PurgeProgress struct {
-	Project  string `json:"project"`
-	Message  string `json:"message"`
-	Percent  int    `json:"percent"`
-	Size     int64  `json:"size"`
-}
-
-type PurgeResult struct {
-	ProjectsCleaned int      `json:"projectsCleaned"`
-	SpaceFreed      int64    `json:"spaceFreed"`
-	Errors          []string `json:"errors"`
-}
-
 // TouchID service types
 
 type TouchIDStatus struct {
