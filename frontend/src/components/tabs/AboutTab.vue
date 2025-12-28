@@ -134,7 +134,7 @@ const coreAttribution = {
     <!-- Footer -->
     <div class="footer">
       <p>Built with care for macOS users</p>
-      <p class="copyright">&copy; 2024 MoleUI. All rights reserved.</p>
+      <p class="copyright">&copy; 2025 MoleUI. All rights reserved.</p>
     </div>
   </div>
 </template>

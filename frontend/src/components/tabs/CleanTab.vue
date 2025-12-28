@@ -12,9 +12,12 @@ onMounted(async () => {
 })
 
 async function startClean() {
+  console.log('startClean called')
   const selectedCategories = categories.value
     .filter(cat => cat.enabled)
     .map(cat => cat.id)
+
+  console.log('Selected categories:', selectedCategories)
 
   if (selectedCategories.length === 0) {
     alert('Please select at least one category')
@@ -25,7 +28,9 @@ async function startClean() {
     return
   }
 
+  console.log('Calling store.executeClean')
   await store.executeClean(selectedCategories, false)
+  console.log('store.executeClean completed')
 }
 
 function toggleCategory(category) {
@@ -65,7 +70,7 @@ function formatSize(mb) {
     <div v-else-if="result" class="result">
       <h2>✓ Cleanup Complete</h2>
       <p class="space-freed">Space freed: {{ formatSize(result.spaceFreed / 1024 / 1024) }}</p>
-      <button @click="result = null" class="btn-primary">Done</button>
+      <button @click="store.resetResult" class="btn-primary">Done</button>
     </div>
 
     <div v-else class="categories">

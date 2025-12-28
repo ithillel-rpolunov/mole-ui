@@ -212,8 +212,11 @@ type ProcessInfo struct {
 // TouchID service types
 
 type TouchIDStatus struct {
-	Enabled bool   `json:"enabled"`
-	Status  string `json:"status"`
+	Enabled       bool   `json:"enabled"`
+	Available     bool   `json:"available"`
+	Status        string `json:"status"`
+	PamModulePath string `json:"pamModulePath"`
+	ConfigPath    string `json:"configPath"`
 }
 
 // Common types
