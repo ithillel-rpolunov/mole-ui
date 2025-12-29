@@ -46,6 +46,12 @@ function handleCancel() {
   console.log('User cancelled cleanup')
 }
 
+async function handleDone() {
+  console.log('Cleanup done, resetting result and refreshing scan')
+  store.resetResult()
+  await store.scanTargets()
+}
+
 function toggleCategory(category) {
   category.enabled = !category.enabled
 }
@@ -93,7 +99,7 @@ function formatSize(mb) {
     <div v-else-if="result" class="result">
       <h2>✓ Cleanup Complete</h2>
       <p class="space-freed">Space freed: {{ formatSize(result.spaceFreed / 1024 / 1024) }}</p>
-      <button @click="store.resetResult" class="btn-primary">Done</button>
+      <button @click="handleDone" class="btn-primary">Done</button>
     </div>
 
     <div v-else class="categories">
