@@ -1,10 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useCleanStore } from '../../stores/clean'
 import { storeToRefs } from 'pinia'
+import ConfirmDialog from '../shared/ConfirmDialog.vue'
 
 const store = useCleanStore()
 const { categories, loading, cleaning, progress, progressMessage, result, error } = storeToRefs(store)
+
+const showConfirmDialog = ref(false)
+const selectedCategories = ref([])
 
 onMounted(async () => {
   await store.scanTargets()
@@ -13,24 +17,33 @@ onMounted(async () => {
 
 async function startClean() {
   console.log('startClean called')
-  const selectedCategories = categories.value
+  selectedCategories.value = categories.value
     .filter(cat => cat.enabled)
     .map(cat => cat.id)
 
-  console.log('Selected categories:', selectedCategories)
+  console.log('Selected categories:', selectedCategories.value)
 
-  if (selectedCategories.length === 0) {
-    alert('Please select at least one category')
+  if (selectedCategories.value.length === 0) {
+    console.log('No categories selected')
+    error.value = 'Please select at least one category'
     return
   }
 
-  if (!confirm('This will clean the selected categories. Continue?')) {
-    return
-  }
+  // Clear any previous errors
+  error.value = null
 
-  console.log('Calling store.executeClean')
-  await store.executeClean(selectedCategories, false)
+  console.log('Showing confirmation dialog')
+  showConfirmDialog.value = true
+}
+
+async function handleConfirm() {
+  console.log('User confirmed, calling store.executeClean')
+  await store.executeClean(selectedCategories.value, false)
   console.log('store.executeClean completed')
+}
+
+function handleCancel() {
+  console.log('User cancelled cleanup')
 }
 
 function toggleCategory(category) {
@@ -49,6 +62,16 @@ function formatSize(mb) {
   <div class="clean-tab">
     <h1>System Cleanup</h1>
     <p class="subtitle">Deep clean your Mac to reclaim disk space</p>
+
+    <ConfirmDialog
+      v-model:show="showConfirmDialog"
+      title="Confirm Cleanup"
+      message="This will clean the selected categories. Continue?"
+      confirm-text="Start Cleanup"
+      cancel-text="Cancel"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
 
     <div v-if="error" class="error-message">
       {{ error }}
