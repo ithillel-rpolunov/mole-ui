@@ -160,11 +160,6 @@ Each tab has its own Pinia store:
 - `useStatusStore()` - Status tab state
 - `useTouchIDStore()` - Touch ID tab state
 
-## Documentation
-
-- [Implementation Plan](docs/plans/2025-12-28-complete-mole-wails.md) - Complete feature roadmap
-- [Mole CLI Repository](https://github.com/tw93/Mole) - Original CLI tool
-
 ## Known Issues
 
 - File size calculations may show 0 for some cloud files (iCloud, sparse files) - uses logical size as fallback
