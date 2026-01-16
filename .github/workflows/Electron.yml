@@ -13,39 +13,46 @@ jobs:
         with:
           node-version: 18
 
-      - name: Find and Build
+      - name: Build Process
         env:
           CSC_LINK: ""
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
-          # 1. Ищем, где лежит package.json
+          # 1. Находим папку с проектом
           PACKAGE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
-          
-          if [ -z "$PACKAGE_PATH" ]; then
-            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл package.json не найден вообще нигде в репозитории!"
-            ls -R
-            exit 1
-          fi
-
-          # 2. Получаем путь к папке, где лежит этот файл
           PROJECT_DIR=$(dirname "$PACKAGE_PATH")
-          echo "Проект найден в папке: $PROJECT_DIR"
           cd "$PROJECT_DIR"
-
-          # 3. Установка и сборка
-          npm install
           
-          # Пробуем собрать (выполнит build или dist, если они есть)
+          echo "Рабочая директория: $PROJECT_DIR"
+          
+          # 2. Установка
+          npm install
+
+          # 3. Пытаемся собрать приложение разными способами
+          # Сначала проверим, какие скрипты вообще есть
+          cat package.json | grep scripts -A 10
+          
+          # Пробуем собрать
           npm run build --if-present
+          npm run electron:build --if-present
+          npm run pack --if-present
           npm run dist --if-present
+
+          # 4. ДИАГНОСТИКА: Ищем все файлы .dmg и .zip по всему репозиторию
+          echo "Поиск готовых файлов..."
+          find . -name "*.dmg"
+          find . -name "*.zip"
+          
+          # Выводим структуру папок для понимания, где мы
+          ls -R
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mole-UI-Mac-App
-          # Ищем файлы во всех возможных папках сборки
+          name: Mole-UI-Mac-Binary
+          # Теперь мы используем максимально широкий поиск
           path: |
+            **/*.dmg
+            **/*.zip
+            **/release/*.dmg
             **/dist/*.dmg
-            **/dist/*.zip
-            **/out/*.dmg
-            **/build/*.dmg
