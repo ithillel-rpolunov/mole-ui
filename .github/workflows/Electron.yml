@@ -4,6 +4,12 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: macos-latest
+    
+    # Указываем, что работать нужно в папке client
+    defaults:
+      run:
+        working-directory: ./client
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -11,23 +17,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      # Этот шаг покажет нам реальную структуру папок, чтобы не гадать
-      - name: List files
-        run: ls -R
+          node-version: 16 # Для старых проектов на Electron лучше использовать 16 версию
 
       - name: Install Dependencies
-        # Если файлы лежат в папке, замените 'app' на имя этой папки из лога выше
-        # Если папки нет, просто уберите working-directory
         run: npm install
-        # working-directory: . 
 
       - name: Build App
         env:
+          # Отключаем подпись кода для обхода ошибки 254
           CSC_LINK: ""
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
-          # Пробуем запустить сборку. 
-          # Если в package.json команда называется иначе, замените build на нужную
+          # В этом репозитории в package.json команда обычно 'build' или 'electron:build'
+          # Мы пробуем запустить стандартную сборку
           npm run build
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mole-UI-Mac
+          # Ищем файлы в папке client/dist или client/out
+          path: |
+            client/dist/*.dmg
+            client/dist/*.zip
+            client/out/*.dmg
