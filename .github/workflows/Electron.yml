@@ -11,29 +11,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18 # Mole-UI может требовать более старую версию, 18 — самая стабильная для него
+          node-version: 18
+
+      # Этот шаг покажет нам реальную структуру папок, чтобы не гадать
+      - name: List files
+        run: ls -R
 
       - name: Install Dependencies
-        run: |
-          npm install
+        # Если файлы лежат в папке, замените 'app' на имя этой папки из лога выше
+        # Если папки нет, просто уберите working-directory
+        run: npm install
+        # working-directory: . 
 
       - name: Build App
         env:
-          # Эти переменные отключают требование подписи Apple
           CSC_LINK: ""
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          APPLE_ID: ""
-          APPLE_ID_PASSWORD: ""
         run: |
-          # Используем команду сборки, которая прописана в package.json
+          # Пробуем запустить сборку. 
+          # Если в package.json команда называется иначе, замените build на нужную
           npm run build
-          
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mole-UI-Mac
-          # Путь может меняться (dist или out), проверьте папку после сборки
-          path: |
-            dist/*.dmg
-            dist/*.zip
-            out/*.dmg
