@@ -1,4 +1,4 @@
-name: Build MacOS
+name: Build Wails App (MacOS)
 on: workflow_dispatch
 
 jobs:
@@ -8,51 +8,40 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Wails требует свежий Go
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Build Process
-        env:
-          CSC_LINK: ""
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build Application
         run: |
-          # 1. Находим папку с проектом
-          PACKAGE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
-          PROJECT_DIR=$(dirname "$PACKAGE_PATH")
+          # Добавляем путь к установленному Wails в PATH
+          export PATH=$PATH:$(go env GOPATH)/bin
+          
+          # Находим корень проекта (где лежит wails.json)
+          WAILS_JSON=$(find . -name "wails.json" | head -n 1)
+          PROJECT_DIR=$(dirname "$WAILS_JSON")
           cd "$PROJECT_DIR"
           
-          echo "Рабочая директория: $PROJECT_DIR"
+          echo "Собираем проект в директории: $PROJECT_DIR"
           
-          # 2. Установка
-          npm install
-
-          # 3. Пытаемся собрать приложение разными способами
-          # Сначала проверим, какие скрипты вообще есть
-          cat package.json | grep scripts -A 10
-          
-          # Пробуем собрать
-          npm run build --if-present
-          npm run electron:build --if-present
-          npm run pack --if-present
-          npm run dist --if-present
-
-          # 4. ДИАГНОСТИКА: Ищем все файлы .dmg и .zip по всему репозиторию
-          echo "Поиск готовых файлов..."
-          find . -name "*.dmg"
-          find . -name "*.zip"
-          
-          # Выводим структуру папок для понимания, где мы
-          ls -R
+          # Запуск сборки под macOS. 
+          # -clean очищает старое, -platform указывает цель
+          wails build -platform darwin/universal -clean
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mole-UI-Mac-Binary
-          # Теперь мы используем максимально широкий поиск
+          name: Mole-UI-Mac
+          # Wails складывает готовые файлы в папку build/bin внутри проекта
           path: |
-            **/*.dmg
-            **/*.zip
-            **/release/*.dmg
-            **/dist/*.dmg
+            **/build/bin/*.app
+            **/build/bin/*.dmg
