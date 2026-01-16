@@ -8,40 +8,44 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Этот шаг покажет в логах, какие файлы есть в репозитории
-      - name: Debug - List Files
-        run: ls -la
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install Dependencies
-        run: |
-          if [ -f "package.json" ]; then
-            npm install
-          else
-            echo "Ошибка: package.json не найден в корне!"
-            exit 1
-          fi
-
-      - name: Build App
+      - name: Find and Build
         env:
           CSC_LINK: ""
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
-          # Пробуем стандартную команду сборки
+          # 1. Ищем, где лежит package.json
+          PACKAGE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
+          
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл package.json не найден вообще нигде в репозитории!"
+            ls -R
+            exit 1
+          fi
+
+          # 2. Получаем путь к папке, где лежит этот файл
+          PROJECT_DIR=$(dirname "$PACKAGE_PATH")
+          echo "Проект найден в папке: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+
+          # 3. Установка и сборка
+          npm install
+          
+          # Пробуем собрать (выполнит build или dist, если они есть)
           npm run build --if-present
           npm run dist --if-present
-          
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mole-UI-Mac
-          # Собираем всё, что похоже на готовое приложение в папках dist или out
+          name: Mole-UI-Mac-App
+          # Ищем файлы во всех возможных папках сборки
           path: |
-            dist/*.dmg
-            dist/*.zip
-            out/*.dmg
-            build/*.dmg
+            **/dist/*.dmg
+            **/dist/*.zip
+            **/out/*.dmg
+            **/build/*.dmg
