@@ -5,13 +5,35 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
-      - run: npm run build # или команда сборки из package.json
-      - uses: actions/upload-artifact@v4
+          node-version: 18 # Mole-UI может требовать более старую версию, 18 — самая стабильная для него
+
+      - name: Install Dependencies
+        run: |
+          npm install
+
+      - name: Build App
+        env:
+          # Эти переменные отключают требование подписи Apple
+          CSC_LINK: ""
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          APPLE_ID: ""
+          APPLE_ID_PASSWORD: ""
+        run: |
+          # Используем команду сборки, которая прописана в package.json
+          npm run build
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: MacOS-App
-          path: dist/*.dmg
+          name: Mole-UI-Mac
+          # Путь может меняться (dist или out), проверьте папку после сборки
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            out/*.dmg
