@@ -4,40 +4,44 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: macos-latest
-    
-    # Указываем, что работать нужно в папке client
-    defaults:
-      run:
-        working-directory: ./client
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Этот шаг покажет в логах, какие файлы есть в репозитории
+      - name: Debug - List Files
+        run: ls -la
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16 # Для старых проектов на Electron лучше использовать 16 версию
+          node-version: 18
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+          else
+            echo "Ошибка: package.json не найден в корне!"
+            exit 1
+          fi
 
       - name: Build App
         env:
-          # Отключаем подпись кода для обхода ошибки 254
           CSC_LINK: ""
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
-          # В этом репозитории в package.json команда обычно 'build' или 'electron:build'
-          # Мы пробуем запустить стандартную сборку
-          npm run build
+          # Пробуем стандартную команду сборки
+          npm run build --if-present
+          npm run dist --if-present
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Mole-UI-Mac
-          # Ищем файлы в папке client/dist или client/out
+          # Собираем всё, что похоже на готовое приложение в папках dist или out
           path: |
-            client/dist/*.dmg
-            client/dist/*.zip
-            client/out/*.dmg
+            dist/*.dmg
+            dist/*.zip
+            out/*.dmg
+            build/*.dmg
